@@ -1,0 +1,9 @@
+{
+  "name": "Нічліг: маршрут з ночівлями",
+  "short_name": "Нічліг",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#eef2f6",
+  "theme_color": "#0a1626",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
