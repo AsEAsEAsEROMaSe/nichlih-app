@@ -20,6 +20,7 @@ interface Props {
 
 const DRAW_MS = 3200;
 const LOOP_MS = 15000;
+const READY_MS = 2500;
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 function aerialTile(lat: number, lon: number): string {
@@ -43,7 +44,7 @@ export function HeroMap({ line, stops }: Props) {
       boxZoom: false, keyboard: false, zoomSnap: 0.1, attributionControl: false,
     });
     L.control.attribution({ position: 'topright', prefix: false }).addAttribution('© OpenStreetMap').addTo(map);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
     const glow = L.polyline(line, { color: '#ffb23e', weight: 14, opacity: 0.35, className: 'hero-route-glow', interactive: false }).addTo(map);
     const route = L.polyline(line, { color: '#ffc866', weight: 4, className: 'hero-route', interactive: false }).addTo(map);
@@ -61,6 +62,17 @@ export function HeroMap({ line, stops }: Props) {
       L.marker([s.lat, s.lon], { icon: L.divIcon({ className: '', iconSize: [0, 0], html }), interactive: false }).addTo(map);
     });
 
+    // Вогник їде в екранних пікселях без округлення: Leaflet ставить мітки з точністю до пікселя,
+    // і рух по кадрах виходить сходинками. Тут лише transform, тож браузер не перемальовує карту.
+    let px: L.Point[] = [];
+    const cum = [0];
+    const measure = () => {
+      const origin = map.getPixelOrigin();
+      px = line.map((p) => map.project(p).subtract(origin));
+      cum.length = 1;
+      for (let i = 1; i < px.length; i++) cum.push(cum[i - 1] + px[i].distanceTo(px[i - 1]));
+    };
+
     const fit = () => {
       const w = el.clientWidth;
       const h = el.clientHeight;
@@ -71,33 +83,44 @@ export function HeroMap({ line, stops }: Props) {
         paddingTopLeft: wide ? [w * 0.55, 60] : [36, h * 0.52],
         paddingBottomRight: wide ? [290, 130] : [36, 80],
       });
+      measure();
     };
     fit();
     const ro = new ResizeObserver(fit);
     ro.observe(el);
 
-    // Вогник їде вздовж маршруту зі сталою швидкістю по екранній довжині.
-    const cum = [0];
-    for (let i = 1; i < line.length; i++) cum.push(cum[i - 1] + Math.hypot(line[i][0] - line[i - 1][0], (line[i][1] - line[i - 1][1]) * 0.65));
-    const total = cum[cum.length - 1];
-    const car = L.marker(line[0], { icon: L.divIcon({ className: '', iconSize: [0, 0], html: '<div class="hero-car"></div>' }), interactive: false });
+    const car = L.DomUtil.create('div', 'hero-car', map.getPanes().markerPane);
+    car.style.display = 'none';
     let raf = 0;
     let t0 = 0;
     const tick = (now: number) => {
       t0 ||= now;
+      const total = cum[cum.length - 1];
       const target = (((now - t0) % LOOP_MS) / LOOP_MS) * total;
       let i = 1;
       while (i < cum.length - 1 && cum[i] < target) i++;
       const k = (target - cum[i - 1]) / (cum[i] - cum[i - 1] || 1);
-      car.setLatLng([line[i - 1][0] + (line[i][0] - line[i - 1][0]) * k, line[i - 1][1] + (line[i][1] - line[i - 1][1]) * k]);
+      const x = px[i - 1].x + (px[i].x - px[i - 1].x) * k;
+      const y = px[i - 1].y + (px[i].y - px[i - 1].y) * k;
+      car.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) translate(-50%, -50%)`;
       raf = requestAnimationFrame(tick);
     };
-    const start = still ? 0 : window.setTimeout(() => {
-      car.addTo(map);
-      raf = requestAnimationFrame(tick);
-    }, DRAW_MS);
+    // Анімація стоїть на паузі (див. styles.css), доки не прийдуть плитки карти,
+    // інакше маршрут малюється по порожньому фону. Повільна мережа не тримає довше READY_MS.
+    let start = 0;
+    const ready = () => {
+      if (el.classList.contains('tiles-ready')) return;
+      el.classList.add('tiles-ready');
+      if (!still) start = window.setTimeout(() => {
+        car.style.display = '';
+        raf = requestAnimationFrame(tick);
+      }, DRAW_MS);
+    };
+    tiles.once('load', ready);
+    const fallback = window.setTimeout(ready, READY_MS);
 
     return () => {
+      clearTimeout(fallback);
       clearTimeout(start);
       cancelAnimationFrame(raf);
       ro.disconnect();

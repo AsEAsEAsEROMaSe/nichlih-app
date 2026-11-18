@@ -37,6 +37,24 @@ function Fit({ points }: { points: LatLon[] }) {
   return null;
 }
 
+/** Анімації ліній чекають на плитки карти (див. styles.css), але не довше 2,5 с. */
+function TilesReady() {
+  const map = useMap();
+  useEffect(() => {
+    const el = map.getContainer();
+    const ready = () => el.classList.add('tiles-ready');
+    const layers: L.TileLayer[] = [];
+    map.eachLayer((l) => { if (l instanceof L.TileLayer) layers.push(l); });
+    layers.forEach((l) => l.once('load', ready));
+    const t = window.setTimeout(ready, 2500);
+    return () => {
+      clearTimeout(t);
+      layers.forEach((l) => l.off('load', ready));
+    };
+  }, [map]);
+  return null;
+}
+
 /** Лінії маршруту промальовуються: довжину шляху зводимо до одиниці, далі працює CSS. */
 function DrawLines({ token }: { token: string }) {
   const map = useMap();
@@ -79,6 +97,7 @@ export function RouteMap({ route, days, focus, onPick, hotId, spot }: Props) {
   return (
     <MapContainer className="map" center={route.coords[0]} zoom={6} scrollWheelZoom zoomControl={false}>
       <TileLayer url={TILES} attribution={ATTRIBUTION} />
+      <TilesReady />
       <Fit points={fit.length ? fit : full} />
       <DrawLines token={segments.map((s) => s.index).join()} />
       <Polyline positions={full} pathOptions={{ color: '#050d18', weight: 9, opacity: 0.85, interactive: false }} />

@@ -112,9 +112,13 @@ a { color: inherit; text-decoration: none; }
 .hero-route { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 3.2s cubic-bezier(0.45, 0.05, 0.3, 1) forwards; filter: drop-shadow(0 0 6px rgb(255 178 62 / 0.9)); }
 .hero-route-glow { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 3.2s cubic-bezier(0.45, 0.05, 0.3, 1) forwards; filter: blur(7px); }
 @keyframes draw { to { stroke-dashoffset: 0; } }
+/* Поки плитки карти не прийшли, анімації на паузі, а карта проявляється вся разом. */
+.leaflet-container:not(.tiles-ready) :is(.hero-route, .hero-route-glow, .hero-stop, .hero-stop-dot, .hero-end, .day-line) { animation-play-state: paused; }
+.leaflet-container .leaflet-tile-pane { transition: opacity 0.5s ease; }
+.leaflet-container:not(.tiles-ready) .leaflet-tile-pane { opacity: 0; }
 .hero-end { position: absolute; transform: translate(-50%, -50%); width: 16px; height: 16px; border-radius: 50%; border: 3px solid #fff; background: var(--night); box-shadow: 0 0 0 6px rgb(255 255 255 / 0.14); }
 .hero-end.finish { background: var(--amber); animation: pop 0.5s 3.1s backwards; }
-.hero-car { position: absolute; transform: translate(-50%, -50%); width: 12px; height: 12px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 5px rgb(255 214 140 / 0.45), 0 0 26px 12px rgb(255 190 90 / 0.75); }
+.hero-car { position: absolute; left: 0; top: 0; will-change: transform; transform: translate(-50%, -50%); width: 12px; height: 12px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 5px rgb(255 214 140 / 0.45), 0 0 26px 12px rgb(255 190 90 / 0.75); }
 .hero-stop { position: absolute; animation: pop 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) backwards; }
 .hero-stop-dot { position: absolute; transform: translate(-50%, -50%); width: 14px; height: 14px; border-radius: 50%; background: var(--amber); border: 3px solid #fff; box-shadow: 0 0 0 0 rgb(255 178 62 / 0.6); animation: ping 2.2s 3.4s ease-out infinite; }
 .hero-stop-card { position: absolute; top: -27px; left: 16px; display: flex; align-items: center; gap: 8px; padding: 5px 12px 5px 5px; background: rgb(14 28 48 / 0.82); backdrop-filter: blur(10px); border: 1px solid rgb(255 255 255 / 0.2); border-radius: 14px; box-shadow: 0 12px 30px rgb(0 0 0 / 0.45); white-space: nowrap; color: #fff; }
