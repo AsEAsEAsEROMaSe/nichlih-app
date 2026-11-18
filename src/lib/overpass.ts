@@ -74,14 +74,14 @@ export function parseHotels(data: unknown): Hotel[] {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Публічні сервери Overpass бувають зайняті: пробуємо по черзі з паузою, що росте. */
-export async function fetchHotels(lines: LatLon[][], radiusM: number): Promise<Hotel[]> {
+export async function fetchHotels(lines: LatLon[][], radiusM: number, headers?: Record<string, string>): Promise<Hotel[]> {
   if (lines.length === 0) return [];
   const body = new URLSearchParams({ data: buildQuery(lines, radiusM) });
   let lastError = 'невідома помилка';
   for (let attempt = 0; attempt < 3; attempt++) {
     const url = ENDPOINTS[attempt % ENDPOINTS.length];
     try {
-      const res = await fetch(url, { method: 'POST', body, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+      const res = await fetch(url, { method: 'POST', body, headers, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
       if (res.ok) return parseHotels(await res.json());
       lastError = `сервер відповів ${res.status}`;
     } catch (e) {

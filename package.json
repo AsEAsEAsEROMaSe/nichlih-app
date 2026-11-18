@@ -8,14 +8,19 @@
     "build": "node node_modules/typescript/bin/tsc --noEmit && node node_modules/vite/bin/vite.js build",
     "preview": "node node_modules/vite/bin/vite.js preview",
     "typecheck": "node node_modules/typescript/bin/tsc --noEmit",
-    "test": "node node_modules/vitest/vitest.mjs run"
+    "test": "node node_modules/vitest/vitest.mjs run",
+    "mcp:build": "node node_modules/vite/bin/vite.js build --ssr src/mcp/main.ts --outDir dist-mcp --emptyOutDir",
+    "mcp": "node dist-mcp/main.js",
+    "mcp:http": "node dist-mcp/main.js --http"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "leaflet": "^1.9.4",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.18.5",
+    "zod": "^4.6.7",
     "zustand": "^5.1.0"
   },
   "devDependencies": {

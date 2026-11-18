@@ -2,15 +2,13 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { searchSections, type PlanParams } from './lib/checkpoints';
 import { todayISO } from './lib/format';
-import { findHotels } from './lib/hotelSource';
+import { browserSources, findHotels } from './lib/hotelSource';
 import { fetchRoutes } from './lib/osrm';
 import type { TripSummary } from './lib/planner';
+import { planParamsFor, RADIUS_KM, safeRoutes, WIDE_RADIUS_KM } from './lib/trip';
 import type { Hotel, LatLon, Place, Route } from './lib/types';
 
-export const WINDOW_SEC = 3600;
-export const STEP_SEC = 900;
-export const RADIUS_KM = 10;
-export const WIDE_RADIUS_KM = 25;
+export { RADIUS_KM, STEP_SEC, WIDE_RADIUS_KM, WINDOW_SEC } from './lib/trip';
 
 export interface Params {
   from?: Place;
@@ -34,11 +32,7 @@ export interface SavedTrip {
   booked: boolean;
 }
 
-export const planParams = (p: Params): PlanParams => ({
-  dayLimitSec: p.dayHours * 3600,
-  windowSec: WINDOW_SEC,
-  stepSec: STEP_SEC,
-});
+export const planParams = (p: Params): PlanParams => planParamsFor(p.dayHours);
 
 type Status = 'idle' | 'routing' | 'hotels' | 'ready';
 
@@ -95,7 +89,7 @@ export const useStore = create<State>()(
         const id = ++run;
         set({ status: 'routing', error: undefined, hotelsError: undefined, routes: [], hotels: [], choices: {} });
         try {
-          const routes = await fetchRoutes([from.lat, from.lon], [to.lat, to.lon]);
+          const routes = await safeRoutes([from.lat, from.lon], [to.lat, to.lon], fetchRoutes, browserSources);
           if (id !== run) return false;
           const routeIdx = restore && restore.routeIdx < routes.length ? restore.routeIdx : 0;
           set({ routes, routeIdx, choices: restore?.choices ?? {} });

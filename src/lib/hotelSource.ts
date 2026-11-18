@@ -1,7 +1,8 @@
 import { checkpointAt } from './checkpoints';
 import { nearestIndex } from './geo';
 import { fetchHotels, parseHotels, sectionLine } from './overpass';
-import type { Hotel, Route } from './types';
+import type { Hotel, LatLon, Route } from './types';
+import { inZones, loadZones, type Zone } from './zones';
 
 export interface Section {
   from: number;
@@ -52,8 +53,22 @@ export interface HotelSearch {
  * Дві стратегії: спершу власний набір (миттєво), а для ділянок, де в ньому порожньо
  * (інші країни), один живий запит до Overpass.
  */
-export async function findHotels(route: Route, sections: Section[], radiusKm: number): Promise<HotelSearch> {
-  const all = await loadDataset();
+export interface HotelSources {
+  dataset: () => Promise<Hotel[]>;
+  zones: () => Promise<Zone[]>;
+  live: (lines: LatLon[][], radiusM: number) => Promise<Hotel[]>;
+}
+
+/** У браузері: файли з public/data і живий Overpass. Сервер MCP підставляє свої. */
+export const browserSources: HotelSources = { dataset: loadDataset, zones: loadZones, live: fetchHotels };
+
+export async function findHotels(
+  route: Route,
+  sections: Section[],
+  radiusKm: number,
+  src: HotelSources = browserSources,
+): Promise<HotelSearch> {
+  const all = await src.dataset();
   const found = new Map<string, Hotel>();
   const missing: Section[] = [];
   for (const s of sections) {
@@ -62,8 +77,11 @@ export async function findHotels(route: Route, sections: Section[], radiusKm: nu
     for (const h of local) found.set(h.id, h);
   }
   if (missing.length) {
-    const live = await fetchHotels(missing.map((s) => sectionLine(route, s.from, s.to)), radiusKm * 1000);
+    const live = await src.live(missing.map((s) => sectionLine(route, s.from, s.to)), radiusKm * 1000);
     for (const h of live) found.set(h.id, h);
   }
-  return { hotels: [...found.values()], liveSections: missing.length };
+  // Файл уже чистий, але живий Overpass може повернути заклад з окупованої зони.
+  const zones = await src.zones();
+  const hotels = [...found.values()].filter((h) => !inZones(zones, h.lat, h.lon));
+  return { hotels, liveSections: missing.length };
 }

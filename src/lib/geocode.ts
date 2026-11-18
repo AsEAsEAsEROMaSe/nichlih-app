@@ -23,9 +23,9 @@ export function parsePlaces(data: unknown): Place[] {
 }
 
 /** Пошук населених пунктів за назвою (Photon, на даних OSM, підходить для підказок). */
-export async function searchPlaces(q: string, signal?: AbortSignal): Promise<Place[]> {
+export async function searchPlaces(q: string, signal?: AbortSignal, headers?: Record<string, string>): Promise<Place[]> {
   const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=6&osm_tag=place`;
-  const res = await fetch(url, { signal });
+  const res = await fetch(url, { signal, headers });
   if (!res.ok) throw new Error(`Пошук місць відповів ${res.status}`);
   return parsePlaces(await res.json());
 }
