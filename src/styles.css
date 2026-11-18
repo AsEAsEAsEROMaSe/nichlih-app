@@ -64,6 +64,9 @@ a { color: inherit; text-decoration: none; }
 .btn.big { min-height: 54px; width: 100%; font-size: 16px; }
 .btn.ghost { background: none; border: 1.5px solid var(--line); color: var(--ink); }
 .btn.ghost.light { color: #fff; border-color: rgb(255 255 255 / 0.3); }
+.btn.danger { background: #d9485f; color: #fff; }
+.privacy-note { margin: 0 0 14px; color: var(--muted); line-height: 1.5; }
+.wipe-row { display: flex; flex-wrap: wrap; gap: 10px; }
 .btn.pick { min-height: 38px; padding: 0 14px; background: var(--paper); font-size: 14px; }
 .btn.pick.on { background: var(--night); color: #fff; }
 .icon-btn { width: 44px; height: 44px; margin-left: auto; border: 0; border-radius: 12px; background: none; color: var(--muted); display: grid; place-items: center; }

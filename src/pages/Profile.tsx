@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { useStore } from '../store';
@@ -9,6 +10,13 @@ export function Profile() {
   const setParams = useStore((s) => s.setParams);
   const trips = useStore((s) => s.trips);
   const initial = profile.name.trim().charAt(0).toUpperCase();
+  const [confirm, setConfirm] = useState(false);
+
+  // Усе, що знає застосунок про користувача, лежить лише в цьому браузері. Стираємо і починаємо з чистого.
+  const wipe = () => {
+    useStore.persist.clearStorage();
+    window.location.replace(window.location.pathname);
+  };
 
   return (
     <div className="page narrow">
@@ -57,6 +65,22 @@ export function Profile() {
         </span>
         <Icon name="chevron" />
       </Link>
+
+      <section className="panel">
+        <h3>Ваші дані</h3>
+        <p className="privacy-note">
+          Акаунта нема: ім'я, налаштування й поїздки зберігаються лише в цьому браузері й нікуди не надсилаються.
+          Сервісам маршрутів і пошуку місць іде тільки текст пошуку й координати точок.
+        </p>
+        {confirm ? (
+          <div className="wipe-row">
+            <button type="button" className="btn danger" onClick={wipe}>Так, стерти все</button>
+            <button type="button" className="btn ghost" onClick={() => setConfirm(false)}>Скасувати</button>
+          </div>
+        ) : (
+          <button type="button" className="btn ghost" onClick={() => setConfirm(true)}>Стерти мої дані з пристрою</button>
+        )}
+      </section>
 
       <p className="fine">Маршрути: OSRM. Готелі й карта: © учасники OpenStreetMap (ODbL). Пошук місць: Photon. Знімки з повітря: Esri. Ціни й бронювання демонстраційні.</p>
     </div>
