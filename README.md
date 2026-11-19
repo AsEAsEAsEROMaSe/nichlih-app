@@ -83,7 +83,7 @@ src/pages/        сторінки
 src/components/   карта, картки, іконки
 src/data/         приклад плану для головної (зібраний з реальних даних)
 public/data/      готелі України й Польщі
-scripts/          вивантаження готелів, прогін сценарію в Chrome
+scripts/          прогін сценарію в Chrome
 ```
 
 ## Тести
@@ -115,7 +115,7 @@ node scripts/walkthrough.mjs http://localhost:4199/ docs/screens 1440 900
 | Готелі, карта | © учасники OpenStreetMap, ліцензія ODbL |
 | Пошук місць | Photon |
 | Знімки з повітря | Esri World Imagery |
-| Межі окупованих територій | DeepStateMap, оновлює `node scripts/occupied.mjs fetch` |
+| Межі окупованих територій | DeepStateMap |
 
 ## Обмеження
 
