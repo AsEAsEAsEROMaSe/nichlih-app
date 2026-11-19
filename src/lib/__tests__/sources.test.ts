@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parsePlaces } from '../geocode';
+import { knownCities, mergePlaces, parsePlaces } from '../geocode';
 import { isMajorRef, parseOsrmRoute, routeUrl } from '../osrm';
 import { buildQuery, parseHotels, sectionLine } from '../overpass';
 import { H, straightRoute } from './helpers';
@@ -88,5 +88,25 @@ describe('parsePlaces', () => {
       { name: 'Київ, Україна', lat: 49.8, lon: 24 },
     ]);
     expect(parsePlaces({})).toEqual([]);
+  });
+});
+
+describe('закордонні міста українською', () => {
+  // Photon на «Краків» повертає лише українські села, тому свій довідник іде першим.
+  it('знаходить Краків, Варшаву й Відень за українською назвою', () => {
+    expect(knownCities('Краків')[0].name).toBe('Краків, Польща');
+    expect(knownCities('варш')[0].name).toBe('Варшава, Польща');
+    expect(knownCities('Відень')[0].name).toBe('Відень, Австрія');
+    expect(knownCities('Кр')).toEqual([]);
+    expect(knownCities('Дніпро')[0]).toMatchObject({ name: 'Дніпро, Україна', lat: 48.4647 });
+  });
+
+  it('свої міста першими, дубль від Photon поруч відкидається, далеке однойменне лишається', () => {
+    const local = [{ name: 'Варшава, Польща', lat: 52.23, lon: 21.01 }];
+    const remote = [
+      { name: 'Warszawa, mazowieckie, Polska', lat: 52.25, lon: 21.0 },
+      { name: 'Варшава, Житомирська область, Україна', lat: 50.4, lon: 28.6 },
+    ];
+    expect(mergePlaces(local, remote).map((p) => p.name)).toEqual(['Варшава, Польща', 'Варшава, Житомирська область, Україна']);
   });
 });
